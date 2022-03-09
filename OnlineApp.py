@@ -160,7 +160,9 @@ class OnlineApp():
     async def __helpCommand(self, message: Message, guild_data):
         await MessageSender.sendEmbed(
             message.channel,
-            [[f"**`{cmd.syntax}`**" for _, cmd in self.commands.items()] + ["**Have question? Found bug? Contact us here!**"],
-            [f"*{cmd.description}*" for _, cmd in self.commands.items()] + ["https://discord.gg/Y7cnUV58Rn"]],
+            [[f"**`{cmd.syntax}`**" for _, cmd in self.commands.items()] + 
+            ["**Get the plugin:**", "**Have question? Found bug? Contact us here!**"],
+            [f"*{cmd.description}*" for _, cmd in self.commands.items()] + 
+            ["https://www.curseforge.com/minecraft/bukkit-plugins/onlinemc", "https://discord.gg/Y7cnUV58Rn"]],
         )
     
