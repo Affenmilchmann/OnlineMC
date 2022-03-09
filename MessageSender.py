@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from time import mktime
+from typing import List
 
 from discord.message import Message
 from discord.channel import TextChannel
@@ -16,7 +17,7 @@ class MessageSender():
         return f"<t:{int(mktime(datetime.now().timetuple()))}>"
 
     @classmethod
-    async def sendEmbed(cls, channel: TextChannel, fields: list[list[str]], thumbnail_url="", colour: Colour=default_embeds_colour, guild_thumbnail: bool=False, guild_footer=True, delete_after=-1, author: Member=None):
+    async def sendEmbed(cls, channel: TextChannel, fields: List[List[str]], thumbnail_url="", colour: Colour=default_embeds_colour, guild_thumbnail: bool=False, guild_footer=True, delete_after=-1, author: Member=None):
         embed_ = Embed(colour=colour)
         if len(fields) != 2:
             raise ValueError(f"fields argument have to have len of 2. Len of fields is {len(fields)}")
@@ -50,7 +51,7 @@ class MessageSender():
             return await channel.send(embed=embed_)
 
     @classmethod 
-    def __formPlayerListStr(cls, player_list: list[str], connection=True) -> str:
+    def __formPlayerListStr(cls, player_list: List[str], connection=True) -> str:
         player_list_str = ""
         if connection:
             for player in player_list:
@@ -64,7 +65,7 @@ class MessageSender():
         return player_list_str
 
     @classmethod
-    async def sendOnlineMsg(cls, channel: TextChannel, player_list: list[str], connection=True):
+    async def sendOnlineMsg(cls, channel: TextChannel, player_list: List[str], connection=True):
         return await cls.sendEmbed(
             channel, 
             [["**Online players:**"],
@@ -72,7 +73,7 @@ class MessageSender():
         )
 
     @classmethod
-    async def editOnlineMsg(cls, message: Message, player_list: list[str], connection=True):
+    async def editOnlineMsg(cls, message: Message, player_list: List[str], connection=True):
         if len(message.embeds) == 0:
             Logger.printLog(f"Message with id {message.id} was edited but it has 0 embeds to edit")
             return

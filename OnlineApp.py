@@ -1,3 +1,5 @@
+from typing import Dict
+
 from discord import Client
 from discord.message import Message
 from discord.guild import Guild, Member
@@ -22,7 +24,7 @@ def needs_guild_file(func):
 class OnlineApp():
     def __init__(self, client: Client) -> None:
         self.client: Client = Client
-        self.commands: dict[str, Command] = {
+        self.commands: Dict[str, Command] = {
             "start": Command("start", self.__startCommand, 
             "Start! Call this command to start using bot", f"{prefix}start"),
             "create": Command("create", self.__createCommand, 
