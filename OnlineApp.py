@@ -160,7 +160,7 @@ class OnlineApp():
     async def __helpCommand(self, message: Message, guild_data):
         await MessageSender.sendEmbed(
             message.channel,
-            [[f"**`{cmd.syntax}`**" for _, cmd in self.commands.items()],
-            [f"*{cmd.description}*" for _, cmd in self.commands.items()]],
+            [[f"**`{cmd.syntax}`**" for _, cmd in self.commands.items()] + ["**Have question? Found bug? Contact us here!**"],
+            [f"*{cmd.description}*" for _, cmd in self.commands.items()] + ["https://discord.gg/Y7cnUV58Rn"]],
         )
     
