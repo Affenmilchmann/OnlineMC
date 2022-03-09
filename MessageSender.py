@@ -40,7 +40,7 @@ class MessageSender():
             embed_.set_thumbnail(url=thumbnail_url)
 
         if guild_footer and guild_icon_url:
-            embed_.set_footer(text=f"mcOnline | Found bug? Have questions? Use {prefix}help to see support server link", icon_url=guild_icon_url)
+            embed_.set_footer(text=f"mcOnline | Found bug? Have a question? Use {prefix}help to see support server link", icon_url=guild_icon_url)
 
         if author:
             embed_.set_author(name=str(author.name)+'#'+str(author.discriminator), icon_url=author.avatar_url)
@@ -88,7 +88,7 @@ class MessageSender():
             channel,
             [["**Your server was linked!**", "*Friendly reminder:*"],
             ["Before creating online player list message consider setting manager role and minecraft server ip.",
-            "*This bot requires OnlineMC (https://www.curseforge.com/minecraft/bukkit-plugins/onlinemc) plugin running on the server*"]],
+            "*This bot requires OnlineMC plugin running on the server. Link can be found in help message*"]],
             guild_thumbnail=True
         )
 
@@ -122,7 +122,7 @@ class MessageSender():
         await cls.sendEmbed(
             channel,
             [["**Server is not set up!**"],
-            [f"Use `{prefix}start` first. Install OnlineMC plugin (https://www.curseforge.com/minecraft/bukkit-plugins/onlinemc) on your server and then make sure you set up your server's ip with `{prefix}set_ip`"]],
+            [f"Use `{prefix}start` first. Install OnlineMC plugin on your server (Link can be found in help message) and then make sure you set up your server's ip with `{prefix}set_ip`"]],
             colour=Colour.red()
         )
 
@@ -149,7 +149,7 @@ class MessageSender():
             channel,
             [["**Failed to connect to minecraft server**"],
             [f"Make sure you have\n \
-                 - Installed mcOnline plugin\n \
+                 - Installed mcOnline plugin (Link can be found in help message)\n \
                  - Port {DEFAULT_PORT} opened on your server"]],
             colour=Colour.red()
         )

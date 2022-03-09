@@ -161,7 +161,7 @@ class OnlineApp():
         await MessageSender.sendEmbed(
             message.channel,
             [[f"**`{cmd.syntax}`**" for _, cmd in self.commands.items()] + 
-            ["**Get the plugin:**", "**Have question? Found bug? Contact us here!**"],
+            ["**Get the plugin:**", "**Have a question? Found bug? Contact us here!**"],
             [f"*{cmd.description}*" for _, cmd in self.commands.items()] + 
             ["https://www.curseforge.com/minecraft/bukkit-plugins/onlinemc", "https://discord.gg/Y7cnUV58Rn"]],
         )
