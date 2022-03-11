@@ -65,6 +65,9 @@ class OnlineApp():
 
     async def onReactionAdd(self, payload) -> None:
         guild_data = FileManager.getGuildDataById(payload.guild_id)
+        # ignoring reactions from not set up guilds
+        if not guild_data:
+            return
         guild: Guild = payload.member.guild
         if guild_data["message"] == payload.message_id and not payload.member.bot:
             channel: TextChannel = guild.get_channel(guild_data["channel"])
