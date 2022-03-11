@@ -97,6 +97,7 @@ class OnlineApp():
         if not guild_data:
             FileManager.createNewGuild(message.guild)
             await MessageSender.sendGuildInited(message.channel)
+            Logger.printLog(f"{message.guild.name} joined! Id: {message.guild.id}")
         else:
             await MessageSender.sendGuildAlreadyInited(message.channel)
 
