@@ -1,14 +1,16 @@
-from typing import Dict
+from typing import Dict, List
+from json import dumps
 
 from discord import Client
 from discord.message import Message
 from discord.guild import Guild, Member
 from discord.role import Role
 from discord.channel import TextChannel
+from discord.errors import Forbidden
 
 from Logger import Logger
 from MessageSender import MessageSender
-from cfg import prefix, refresh_emoji
+from cfg import prefix, refresh_emoji, owner_id
 from Command import Command
 from FileManager import FileManager
 from ApiManager import ApiManager
@@ -21,9 +23,16 @@ def needs_guild_file(func):
         await func(self, message, guild_data)
     return wrapped_func
 
+def owner_command(func):
+    async def wrapped_func(self=None, message: Message=None):
+        if message.author.id != owner_id:
+            return
+        await func(self, message)
+    return wrapped_func
+
 class OnlineApp():
     def __init__(self, client: Client) -> None:
-        self.client: Client = Client
+        self.client: Client = client
         self.commands: Dict[str, Command] = {
             "start": Command("start", self.__startCommand, 
             "Start! Call this command to start using bot", f"{prefix}start"),
@@ -40,6 +49,10 @@ class OnlineApp():
             "help": Command("help", self.__helpCommand, 
             "Shows help message", f"{prefix}help"),
         }
+        self.owner_commands: Dict[str, Command] = {
+            "stat": Command("stat", self.__statOwnerCommand, 
+            "-", "-"),
+        }
         Logger.printLog("App inited")
 
     async def onMessage(self, message: Message) -> None:
@@ -47,15 +60,15 @@ class OnlineApp():
         if not command:
             return
 
-        if command in self.commands:
+        if command in self.commands and type(message.channel) == TextChannel:
             if self.__isPermitted(message):
                 guild_data = FileManager.getGuildData(message.guild)
                 await self.commands[command].handler(message, guild_data)
             else:
                 await MessageSender.sendNotPermitted(message.channel)
-        else:
-            await MessageSender.sendUnknownCommand(message.channel)
-        
+        elif command in self.owner_commands:
+            await self.owner_commands[command].handler(message)
+
     def __isPermitted(self, message: Message) -> bool:
         mgr_role_id = FileManager.getRole(message.guild)
         mgr_role: Role = message.guild.get_role(mgr_role_id)
@@ -65,7 +78,7 @@ class OnlineApp():
 
     async def onReactionAdd(self, payload) -> None:
         guild_data = FileManager.getGuildDataById(payload.guild_id)
-        # ignoring reactions from not set up guilds
+        # ignoring reactions from not set up guilds or dms
         if not guild_data:
             return
         guild: Guild = payload.member.guild
@@ -81,6 +94,7 @@ class OnlineApp():
             api_result = ApiManager.getOnlineList(guild_data["server_ip"], guild_data["port"])
             await MessageSender.editOnlineMsg(online_msg, api_result, api_result != False)
             await online_msg.remove_reaction(refresh_emoji, payload.member)
+            FileManager.incTotalRefreshesById(guild.id)
 
     def __retrieveCommandFromMessageStr(self, msg_str: str) -> str:
         """Returns whatever goes after prefix. If message does not start with prefix, returns False"""
@@ -170,3 +184,25 @@ class OnlineApp():
             ["https://www.curseforge.com/minecraft/bukkit-plugins/onlinemc", "https://discord.gg/Y7cnUV58Rn"]],
         )
     
+    @owner_command
+    async def __statOwnerCommand(self, message: Message):
+        guild_ids = FileManager.getGuildsIds()
+        guilds_data: List = []
+        guild_names: List[str] = []
+        for id_ in guild_ids:
+            try:
+                guild: Guild = await self.client.fetch_guild(guild_id=id_)
+                if not guild:
+                    guild_names.append(f"Name: *`Cant fetch guild`* Id: `{id_}`")
+                else:
+                    guild_names.append(f"Name: `{guild.name}` Id: `{id_}`")
+            except Forbidden:
+                guild_names.append(f"Name: *`Guild is forbidden`* Id: `{id_}`")
+
+            guilds_data.append(f"```{dumps(FileManager.getGuildDataById(id_), indent=4)}```")
+
+        await MessageSender.sendEmbed(
+            message.channel,
+            [guild_names, guilds_data],
+            guild_footer=False
+        )

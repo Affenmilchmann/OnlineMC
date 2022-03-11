@@ -27,11 +27,11 @@ class MessageSender():
             raise ValueError(f"'fields's inner lists must be same size. Sizes are {len(fields[0])} and {len(fields[1])}")
 
         for i in range(len(fields[0])):
-            embed_.add_field(name=fields[0][i], value=fields[1][i], inline=False)
+            embed_.add_field(name=str(fields[0][i]), value=str(fields[1][i]), inline=False)
 
         try:
             guild_icon_url = channel.guild.icon_url
-        except ValueError:
+        except AttributeError:
             guild_icon_url = None
 
         if guild_thumbnail and guild_icon_url:

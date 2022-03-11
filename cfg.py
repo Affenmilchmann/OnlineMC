@@ -17,3 +17,5 @@ refresh_emoji = "🔄"
 default_embeds_colour = Colour.green()
 API_PATH = "/mconline/"
 DEFAULT_PORT = "11235"
+
+owner_id = 360440725923430440
