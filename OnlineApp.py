@@ -28,7 +28,7 @@ class OnlineApp():
             "start": Command("start", self.__startCommand, 
             "Start! Call this command to start using bot", f"{prefix}start"),
             "create": Command("create", self.__createCommand, 
-            "Creates online list updateable message in the channel where this command was recieved.", f"{prefix}create"),
+            "Creates online list updateable message in the channel where this command was recieved. This may take up to 10 seconds!", f"{prefix}create"),
             "delete": Command("delete", self.__deleteCommand, 
             "Deletes current online list updateable message.", f"{prefix}delete"),
             "set_role": Command("set_role", self.__setRoleCommand, 

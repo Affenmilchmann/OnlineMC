@@ -8,7 +8,7 @@ class ApiManager():
     @classmethod
     def __sendRequest(cls, addr: str):
         try:
-            resp = get(url=addr)
+            resp = get(url=addr, timeout=10)
         except RequestException as e:
             Logger.printLog(f"{e}", error=True)
             return False
