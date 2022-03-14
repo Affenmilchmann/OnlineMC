@@ -10,9 +10,10 @@ class ApiManager():
         try:
             resp = get(url=addr, timeout=10)
         except RequestException as e:
-            Logger.printLog(f"{e}", error=True)
+            Logger.writeApiFatalLog(f"{e}")
             return False
         if not resp.ok:
+            Logger.writeApiFatalLog(f"[NOT OK] {resp.url} {resp.content}")
             return False
 
         return loads(resp.text.encode('utf8'))

@@ -12,7 +12,7 @@ from Logger import Logger
 from MessageSender import MessageSender
 from cfg import prefix, refresh_emoji, owner_id
 from Command import Command
-from FileManager import FileManager
+from FileManager import FileManager, StatFileManager
 from ApiManager import ApiManager
 
 def needs_guild_file(func):
@@ -50,6 +50,8 @@ class OnlineApp():
             "Shows help message", f"{prefix}help"),
         }
         self.owner_commands: Dict[str, Command] = {
+            "data": Command("data", self.__dataOwnerCommand, 
+            "-", "-"),
             "stat": Command("stat", self.__statOwnerCommand, 
             "-", "-"),
         }
@@ -94,7 +96,10 @@ class OnlineApp():
             api_result = ApiManager.getOnlineList(guild_data["server_ip"], guild_data["port"])
             await MessageSender.editOnlineMsg(online_msg, api_result, api_result != False)
             await online_msg.remove_reaction(refresh_emoji, payload.member)
-            FileManager.incTotalRefreshesById(guild.id)
+            # recording statistics and logs
+            StatFileManager.incCallStat(payload.guild_id)
+            member: Member = await guild.fetch_member(payload.user_id)
+            Logger.writeApiLog(f"{member.display_name} from {guild.name} refreshed the list | guild:{guild.id} member: {member.id}")
 
     def __retrieveCommandFromMessageStr(self, msg_str: str) -> str:
         """Returns whatever goes after prefix. If message does not start with prefix, returns False"""
@@ -185,7 +190,7 @@ class OnlineApp():
         )
     
     @owner_command
-    async def __statOwnerCommand(self, message: Message):
+    async def __dataOwnerCommand(self, message: Message):
         guild_ids = FileManager.getGuildsIds()
         guilds_data: List = []
         guild_names: List[str] = []
@@ -200,6 +205,29 @@ class OnlineApp():
                 guild_names.append(f"Name: *`Guild is forbidden`* Id: `{id_}`")
 
             guilds_data.append(f"```{dumps(FileManager.getGuildDataById(id_), indent=4)}```")
+
+        await MessageSender.sendEmbed(
+            message.channel,
+            [guild_names, guilds_data],
+            guild_footer=False
+        )
+
+    @owner_command
+    async def __statOwnerCommand(self, message: Message):
+        guild_ids = StatFileManager.getGuildsIds()
+        guilds_data: List = []
+        guild_names: List[str] = []
+        for id_ in guild_ids:
+            try:
+                guild: Guild = await self.client.fetch_guild(guild_id=id_)
+                if not guild:
+                    guild_names.append(f"Name: *`Cant fetch guild`* Id: `{id_}`")
+                else:
+                    guild_names.append(f"Name: `{guild.name}` Id: `{id_}`")
+            except Forbidden:
+                guild_names.append(f"Name: *`Guild is forbidden`* Id: `{id_}`")
+
+            guilds_data.append(f"```{dumps(StatFileManager.getStats(id_), indent=4)}```")
 
         await MessageSender.sendEmbed(
             message.channel,

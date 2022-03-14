@@ -1,3 +1,4 @@
+from datetime import datetime
 from os import listdir
 from os.path import isfile, join
 from json import load, dump
@@ -9,8 +10,76 @@ from discord.role import Role
 from discord.channel import TextChannel
 from discord.message import Message
 
-from cfg import DATA_FOLDER, DEFAULT_PORT
+from cfg import DATA_FOLDER, DEFAULT_PORT, STAT_DATA_FOLDER, WEEK_NUMBER_FILE
 from Logger import Logger
+
+class StatFileManager():
+    @classmethod
+    def __getFileList(cls) -> List[str]:
+        return [f for f in listdir(STAT_DATA_FOLDER) if isfile(join(STAT_DATA_FOLDER, f))]
+
+    @classmethod
+    def getGuildsIds(cls) -> List[int]:
+        rtrn = []
+        for file in cls.__getFileList():
+            try:
+                if not WEEK_NUMBER_FILE.endswith(file):
+                    rtrn.append(int(file.replace(".json", "")))
+            except ValueError:
+                Logger.printLog(f"{file} had invalid name. Its ignored in statistics")
+        return rtrn
+
+    @classmethod
+    def createStats(cls, guild_id: int, val: int = 0):
+        with open(f"{STAT_DATA_FOLDER}{guild_id}.json", 'w') as f:
+            dump({
+                "total_calls": val,
+                "calls_this_week": val
+            }, f)
+
+    @classmethod
+    def getStats(cls, guild_id: int):
+        try:
+            with open(f"{STAT_DATA_FOLDER}{guild_id}.json", 'r') as f:
+                return load(f)
+        except FileNotFoundError:
+            return False
+
+    @classmethod
+    def __setStats(cls, guild_id: int, total_calls: int, calls_this_week: int):
+        with open(f"{STAT_DATA_FOLDER}{guild_id}.json", 'w') as f:
+            dump({
+                "total_calls": total_calls,
+                "calls_this_week": calls_this_week
+            }, f)
+
+    @classmethod
+    def setWeekCalls(cls, guild_id: int, calls_this_week: int):
+        data = cls.getStats(guild_id)
+        if not data:
+            return False
+        cls.__setStats(guild_id, data["total_calls"], calls_this_week)
+
+    @classmethod
+    def __checkIfWeekPassed(cls):
+        with open(WEEK_NUMBER_FILE, 'r') as f:
+            saved_week_number = load(f)
+        current_week_number = datetime.now().isocalendar()[1]
+        if current_week_number != saved_week_number:
+            Logger.printLog(f"New week number {current_week_number}. Weekly stats reset")
+            with open(WEEK_NUMBER_FILE, 'w') as f:
+                dump(current_week_number, f)
+            for guild_id in cls.getGuildsIds():
+                cls.setWeekCalls(guild_id, 0)
+
+    @classmethod
+    def incCallStat(cls, guild_id: int):
+        cls.__checkIfWeekPassed()
+        stats = cls.getStats(guild_id)
+        if not stats:
+            cls.createStats(guild_id, 1)
+            return
+        cls.__setStats(guild_id, stats["total_calls"] + 1, stats["calls_this_week"] + 1)
 
 class FileManager():
     @classmethod
@@ -37,12 +106,7 @@ class FileManager():
         """Returns guild data. If file is not present returns False"""
         try:
             with open(f"{DATA_FOLDER}{guild_id}.json", 'r') as f:
-                data = load(f)
-            if not "total_refreshes" in data:
-                data["total_refreshes"] = 0
-                with open(f"{DATA_FOLDER}{guild_id}.json", 'w') as f:
-                    dump(data, f)
-            return data
+                return load(f)
         except FileNotFoundError:
             return False
         except JSONDecodeError:
@@ -73,16 +137,16 @@ class FileManager():
             message_id=-1,
             server_ip="",
             port=DEFAULT_PORT,
-            total_rfrsh=0
         )
+        StatFileManager.createStats(guild_id)
 
     @classmethod
-    def __setGuildData(cls, guild: Guild, manager_role_id: int, channel_id: int, message_id: int, server_ip: str, port: str, total_rfrsh: int):
+    def __setGuildData(cls, guild: Guild, manager_role_id: int, channel_id: int, message_id: int, server_ip: str, port: str):
         """Saves dict {'mgr_role': manager_role.id, 'channel': channel.id, 'message': message.id} in file <id>.json"""
-        cls.__setGuildDataById(guild.id, manager_role_id, channel_id, message_id, server_ip, port, total_rfrsh)
+        cls.__setGuildDataById(guild.id, manager_role_id, channel_id, message_id, server_ip, port)
 
     @classmethod
-    def __setGuildDataById(cls, guild_id: int, manager_role_id: int, channel_id: int, message_id: int, server_ip: str, port: str, total_rfrsh: int):
+    def __setGuildDataById(cls, guild_id: int, manager_role_id: int, channel_id: int, message_id: int, server_ip: str, port: str):
         """Saves dict {'mgr_role': manager_role.id, 'channel': channel.id, 'message': message.id} in file <id>.json"""
         with open(f"{DATA_FOLDER}{guild_id}.json", 'w') as f:
             dump({
@@ -90,8 +154,7 @@ class FileManager():
                 "channel": channel_id,
                 "message": message_id,
                 "server_ip": server_ip,
-                "port": port,
-                "total_refreshes": total_rfrsh
+                "port": port
             }, f)
 
     @classmethod
@@ -100,7 +163,7 @@ class FileManager():
         data = cls.getGuildData(guild)
         if not data:
             return False
-        cls.__setGuildData(guild, new_manager_role.id, data["channel"], data["message"], data["server_ip"], data["port"], data["total_refreshes"])
+        cls.__setGuildData(guild, new_manager_role.id, data["channel"], data["message"], data["server_ip"], data["port"])
 
     @classmethod
     def setChannel(cls, guild: Guild, new_channel: TextChannel):
@@ -108,7 +171,7 @@ class FileManager():
         data = cls.getGuildData(guild)
         if not data:
             return False
-        cls.__setGuildData(guild, data["mgr_role"], new_channel.id, data["message"], data["server_ip"], data["port"], data["total_refreshes"])
+        cls.__setGuildData(guild, data["mgr_role"], new_channel.id, data["message"], data["server_ip"], data["port"])
 
     @classmethod
     def setMessage(cls, guild: Guild, new_message: Message):
@@ -116,7 +179,7 @@ class FileManager():
         data = cls.getGuildData(guild)
         if not data:
             return False
-        cls.__setGuildData(guild, data["mgr_role"], data["channel"], new_message.id, data["server_ip"], data["port"], data["total_refreshes"])
+        cls.__setGuildData(guild, data["mgr_role"], data["channel"], new_message.id, data["server_ip"], data["port"])
 
     @classmethod
     def setServerIp(cls, guild: Guild, new_ip: str):
@@ -124,7 +187,7 @@ class FileManager():
         data = cls.getGuildData(guild)
         if not data:
             return False
-        cls.__setGuildData(guild, data["mgr_role"], data["channel"], data["message"], new_ip, data["port"], data["total_refreshes"])
+        cls.__setGuildData(guild, data["mgr_role"], data["channel"], data["message"], new_ip, data["port"])
 
     @classmethod
     def setPort(cls, guild: Guild, new_port: str):
@@ -132,31 +195,7 @@ class FileManager():
         data = cls.getGuildData(guild)
         if not data:
             return False
-        cls.__setGuildData(guild, data["mgr_role"], data["channel"], data["message"], data["server_ip"], new_port, data["total_refreshes"])
-
-    @classmethod
-    def setTotalRefreshes(cls, guild: Guild, total_refreshes: int = 0):
-        """Sets channel for guild. Returns False if file is not present"""
-        data = cls.getGuildData(guild)
-        if not data:
-            return False
-        cls.__setGuildData(guild, data["mgr_role"], data["channel"], data["message"], data["server_ip"], data["port"], total_refreshes)
-
-    @classmethod
-    def setTotalRefreshesById(cls, guild_id: int, total_refreshes: int = 0):
-        """Sets channel for guild. Returns False if file is not present"""
-        data = cls.getGuildDataById(guild_id)
-        if not data:
-            return False
-        cls.__setGuildDataById(guild_id, data["mgr_role"], data["channel"], data["message"], data["server_ip"], data["port"], total_refreshes)
-
-    @classmethod
-    def incTotalRefreshesById(cls, guild_id: int):
-        """Sets channel for guild. Returns False if file is not present"""
-        data = cls.getGuildDataById(guild_id)
-        if not data:
-            return False
-        cls.__setGuildDataById(guild_id, data["mgr_role"], data["channel"], data["message"], data["server_ip"], data["port"], data["total_refreshes"] + 1)
+        cls.__setGuildData(guild, data["mgr_role"], data["channel"], data["message"], data["server_ip"], new_port)
 
     @classmethod
     def resetChannel(cls, guild: Guild):
@@ -164,7 +203,7 @@ class FileManager():
         data = cls.getGuildData(guild)
         if not data:
             return False
-        cls.__setGuildData(guild, data["mgr_role"], -1, data["message"], data["server_ip"], data["port"], data["total_refreshes"])
+        cls.__setGuildData(guild, data["mgr_role"], -1, data["message"], data["server_ip"], data["port"])
 
     @classmethod
     def resetMessage(cls, guild: Guild):
@@ -172,4 +211,4 @@ class FileManager():
         data = cls.getGuildData(guild)
         if not data:
             return False
-        cls.__setGuildData(guild, data["mgr_role"], data["channel"], -1, data["server_ip"], data["port"], data["total_refreshes"])
+        cls.__setGuildData(guild, data["mgr_role"], data["channel"], -1, data["server_ip"], data["port"])
