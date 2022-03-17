@@ -23,10 +23,15 @@ if not ospath.exists(WEEK_NUMBER_FILE):
         dump(0, f)
         Logger.printLog(f"{WEEK_NUMBER_FILE} was missiog so it was created")
 
-prefix = "mcon!"
+prefix = "test!mcon!"
 refresh_emoji = "🔄"
 default_embeds_colour = Colour.green()
 API_PATH = "/mconline/"
 DEFAULT_PORT = "11235"
+LANGS = {
+    "russian" : "ru",
+    "english": "en"
+}
+DEFAULT_LANG = "en"
 
 owner_id = 360440725923430440

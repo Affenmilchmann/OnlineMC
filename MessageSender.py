@@ -8,7 +8,8 @@ from discord.embeds import Embed
 from discord.colour import Colour
 from discord.guild import Member, Guild
 
-from cfg import default_embeds_colour, prefix, DEFAULT_PORT
+from cfg import default_embeds_colour, prefix, DEFAULT_PORT, DEFAULT_LANG
+from messages_cfg import *
 from Logger import Logger
 
 class MessageSender():
@@ -17,7 +18,7 @@ class MessageSender():
         return f"<t:{int(mktime(datetime.now().timetuple()))}>"
 
     @classmethod
-    async def sendEmbed(cls, channel: TextChannel, fields: List[List[str]], thumbnail_url="", colour: Colour=default_embeds_colour, guild_thumbnail: bool=False, guild_footer=True, delete_after=-1, author: Member=None):
+    async def sendEmbed(cls, channel: TextChannel, fields: List[List[str]], lang: str=DEFAULT_LANG, thumbnail_url="", colour: Colour=default_embeds_colour, guild_thumbnail: bool=False, guild_footer=True, delete_after=-1, author: Member=None):
         embed_ = Embed(colour=colour)
         if len(fields) != 2:
             raise ValueError(f"fields argument have to have len of 2. Len of fields is {len(fields)}")
@@ -40,7 +41,7 @@ class MessageSender():
             embed_.set_thumbnail(url=thumbnail_url)
 
         if guild_footer and guild_icon_url:
-            embed_.set_footer(text=f"mcOnline | Found bug? Have a question? Use {prefix}help to see support server link", icon_url=guild_icon_url)
+            embed_.set_footer(text=footer_text[lang], icon_url=guild_icon_url)
 
         if author:
             embed_.set_author(name=str(author.name)+'#'+str(author.discriminator), icon_url=author.avatar_url)
@@ -51,141 +52,170 @@ class MessageSender():
             return await channel.send(embed=embed_)
 
     @classmethod 
-    def __formPlayerListStr(cls, player_list: List[str], connection=True) -> str:
+    def __formPlayerListStr(cls, player_list: List[str], lang: str, connection=True) -> str:
         player_list_str = ""
         if connection:
             for player in player_list:
                 player_list_str += f"`{cls.clearFromFormattingChars(player)}`\n"
             player_list_str = player_list_str[:900]
             if len(player_list) == 0:
-                player_list_str = "Nobody is online!\n"
+                player_list_str = online_list_msg["server_empty"][lang] + "\n"
         else:
-            player_list_str = "Server is offline\n"
-        player_list_str += f"\n *Last update: {cls.__getDiscordNowTime()}*"
+            player_list_str = online_list_msg["server_offline"][lang] + "\n"
+        player_list_str += "\n" + online_list_msg["last_update"][lang].format(cls.__getDiscordNowTime())
         return player_list_str
 
     @classmethod
-    async def sendOnlineMsg(cls, channel: TextChannel, player_list: List[str], connection=True):
+    async def sendOnlineMsg(cls, channel: TextChannel, player_list: List[str], lang: str, connection=True):
         return await cls.sendEmbed(
             channel, 
-            [["**Online players:**"],
-            [cls.__formPlayerListStr(player_list, connection)]],
+            [[online_list_msg["online_players"][lang]],
+            [cls.__formPlayerListStr(player_list, lang, connection)]],
+            lang
         )
 
     @classmethod
-    async def editOnlineMsg(cls, message: Message, player_list: List[str], connection=True):
+    async def editOnlineMsg(cls, message: Message, player_list: List[str], lang: str, connection=True):
         if len(message.embeds) == 0:
             Logger.printLog(f"Message with id {message.id} was edited but it has 0 embeds to edit")
             return
         embed_: Embed = message.embeds[0]
         embed_.clear_fields()
-        embed_.add_field(name="**Online players:**", value=cls.__formPlayerListStr(player_list, connection))
+        embed_.add_field(name=online_list_msg["online_players"][lang], value=cls.__formPlayerListStr(player_list, lang, connection))
         await message.edit(embed=embed_)
 
     @classmethod
-    async def sendGuildInited(cls, channel: TextChannel):
+    async def sendGuildInited(cls, channel: TextChannel, lang: str):
         await cls.sendEmbed(
             channel,
-            [["**Your server was linked!**", "*Friendly reminder:*"],
-            ["Before creating online player list message consider setting manager role and minecraft server ip.",
-            "*This bot requires OnlineMC plugin running on the server. Link can be found in help message*"]],
+            [info_msgs["guild_inited"]["name"][lang],
+            info_msgs["guild_inited"]["value"][lang]],
+            lang,
             guild_thumbnail=True
         )
 
     @classmethod
-    async def sendGuildAlreadyInited(cls, channel: TextChannel):
+    async def sendGuildAlreadyInited(cls, channel: TextChannel, lang: str):
         await cls.sendEmbed(
             channel,
-            [["**Oops!**"],
-            ["Your server is already linked"]],
+            [[info_msgs["guild_alr_inited"]["name"][lang]],
+            [info_msgs["guild_alr_inited"]["value"][lang]]],
+            lang,
         )
 
     @classmethod
-    async def sendInvalidSyntax(cls, channel: TextChannel, message: str):
+    async def sendInvalidSyntax(cls, channel: TextChannel, error_type: str, lang: str):
         await cls.sendEmbed(
             channel,
-            [["**Invalid syntax**"],
-            [message]],
+            [[info_msgs["invalid_syntax"][lang]],
+            [info_msgs["invalid_syntax_comments"][error_type][lang]]],
+            lang,
             colour=Colour.red()
         )
 
     @classmethod
-    async def sendParameterSet(cls, channel: TextChannel, parameter_name: str, parameter_val: str):
+    async def sendParameterSet(cls, channel: TextChannel, parameter_name: str, parameter_val: str, lang: str):
         await cls.sendEmbed(
             channel,
-            [["**Success!**"],
-            [f"{parameter_name} was set to {parameter_val}"]],
+            [[info_msgs["success"][lang]],
+            [info_msgs["parameter_set"][lang].format(name=info_msgs["parameters"][parameter_name][lang], val=parameter_val)]],
+            lang,
         )
 
     @classmethod
-    async def sendNotSetUp(cls, channel: TextChannel):
+    async def sendNotSetUp(cls, channel: TextChannel, lang: str):
         await cls.sendEmbed(
             channel,
-            [["**Server is not set up!**"],
-            [f"Use `{prefix}start` first. Install OnlineMC plugin on your server (Link can be found in help message) and then make sure you set up your server's ip with `{prefix}set_ip`"]],
+            [[info_msgs["guild_not_set_up"]["name"][lang]],
+            [info_msgs["guild_not_set_up"]["value"][lang]]],
+            lang,
             colour=Colour.red()
         )
 
     @classmethod
-    async def sendMessageMissing(cls, channel: TextChannel):
+    async def sendNotLinked(cls, channel: TextChannel, lang: str):
         await cls.sendEmbed(
             channel,
-            [["**Cant find online list message!**"],
-            [f"If message is present and you see this, delete online list message yourself"]],
+            [[info_msgs["guild_not_linked"]["name"][lang]],
+            [info_msgs["guild_not_linked"]["value"][lang]]],
+            lang,
+            colour=Colour.red()
+        )
+
+    @classmethod
+    async def sendMessageMissing(cls, channel: TextChannel, lang: str):
+        await cls.sendEmbed(
+            channel,
+            [[info_msgs["message_missing"]["name"][lang]],
+            [info_msgs["message_missing"]["value"][lang]]],
+            lang,
             colour=Colour.red()
         )
         
     @classmethod
-    async def sendMessageDeleted(cls, channel: TextChannel):
+    async def sendMessageDeleted(cls, channel: TextChannel, lang: str):
         await cls.sendEmbed(
             channel,
-            [["**Message was deleted!**"],
+            [[info_msgs["message_deleted"][lang]],
             [f"-"]],
+            lang,
         )
 
     @classmethod
-    async def sendCantConnect(cls, channel: TextChannel):
+    async def sendCantConnect(cls, channel: TextChannel, lang: str):
         await cls.sendEmbed(
             channel,
-            [["**Failed to connect to minecraft server**"],
-            [f"Make sure you have\n \
-                 - Installed mcOnline plugin (Link can be found in help message)\n \
-                 - Port {DEFAULT_PORT} opened on your server"]],
+            [[info_msgs["cant_connect"]["name"][lang]],
+            [info_msgs["cant_connect"]["value"][lang]]],
+            lang,
             colour=Colour.red()
         )
 
     @classmethod
-    async def sendCfg(cls, channel: TextChannel, cfg_data: dict):
+    async def sendCfg(cls, channel: TextChannel, cfg_data: dict, lang: str):
         titels = []
         values = []
-        titels.append("**Manager role**")
-        values.append("> Missing" if cfg_data["mgr_role"] == -1 else f"> <@&{cfg_data['mgr_role']}>")
-        titels.append("**Channel**")
-        values.append("> Missing" if cfg_data["channel"] == -1 else f"> <#{cfg_data['channel']}>")
-        titels.append("**Online list message**")
-        values.append("> Missing" if cfg_data["message"] == -1 else "> Present")
-        titels.append("**Server IP**")
-        values.append(f"> {cfg_data['server_ip']}")
+        titels.append(cfg_msg["mgr_field_name"][lang])
+        values.append(cfg_msg["missing_value"][lang] if cfg_data["mgr_role"] == -1 else f"> <@&{cfg_data['mgr_role']}>")
+        titels.append(cfg_msg["channel_field_name"][lang])
+        values.append(cfg_msg["missing_value"][lang] if cfg_data["channel"] == -1 else f"> <#{cfg_data['channel']}>")
+        titels.append(cfg_msg["msg_field_name"][lang])
+        values.append(cfg_msg["missing_value"][lang] if cfg_data["message"] == -1 else cfg_msg["present_value"][lang])
+        titels.append(cfg_msg["ip_field_name"][lang])
+        values.append(cfg_msg["missing_value"][lang] if cfg_data["server_ip"] == "" else f"> {cfg_data['server_ip']}")
         await cls.sendEmbed(
             channel,
             [titels, values],
+            lang,
         )
 
     @classmethod
-    async def sendUnknownCommand(cls, channel: TextChannel):
+    async def sendLangSwitched(cls, channel: TextChannel, lang: str):
         await cls.sendEmbed(
             channel,
-            [["**Unknown command!**"],
-            [f"Try `{prefix}help`"]],
+            [[lang_switched_msg[lang]],
+            [f"-"]],
+            lang,
+            colour=Colour.green()
+        )
+
+    @classmethod
+    async def sendUnknownCommand(cls, channel: TextChannel, lang: str):
+        await cls.sendEmbed(
+            channel,
+            [[info_msgs["unknown_command"]["name"][lang]],
+            [info_msgs["unknown_command"]["value"][lang]]],
+            lang,
             colour=Colour.red()
         )
 
     @classmethod
-    async def sendNotPermitted(cls, channel: TextChannel):
+    async def sendNotPermitted(cls, channel: TextChannel, lang: str):
         await cls.sendEmbed(
             channel,
-            [["**You are not permitted to use this command!**"],
+            [[info_msgs["not_permitted"][lang]],
             [f"-"]],
+            lang,
             colour=Colour.red()
         )
 

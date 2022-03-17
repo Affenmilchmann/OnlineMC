@@ -6,11 +6,12 @@ from discord.message import Message
 from discord.guild import Guild, Member
 from discord.role import Role
 from discord.channel import TextChannel
-from discord.errors import Forbidden
+from discord.errors import Forbidden, DiscordException
 
 from Logger import Logger
 from MessageSender import MessageSender
-from cfg import prefix, refresh_emoji, owner_id
+from cfg import DEFAULT_LANG, prefix, refresh_emoji, owner_id
+from messages_cfg import help_links, command_descriptions
 from Command import Command
 from FileManager import FileManager, StatFileManager
 from ApiManager import ApiManager
@@ -18,7 +19,7 @@ from ApiManager import ApiManager
 def needs_guild_file(func):
     async def wrapped_func(self=None, message: Message=None, guild_data=None):
         if not guild_data:
-            await MessageSender.sendNotSetUp(message.channel)
+            await MessageSender.sendNotLinked(message.channel, DEFAULT_LANG)
             return
         await func(self, message, guild_data)
     return wrapped_func
@@ -34,26 +35,19 @@ class OnlineApp():
     def __init__(self, client: Client) -> None:
         self.client: Client = client
         self.commands: Dict[str, Command] = {
-            "start": Command("start", self.__startCommand, 
-            "Start! Call this command to start using bot", f"{prefix}start"),
-            "create": Command("create", self.__createCommand, 
-            "Creates online list updateable message in the channel where this command was recieved. This may take up to 10 seconds!", f"{prefix}create"),
-            "delete": Command("delete", self.__deleteCommand, 
-            "Deletes current online list updateable message.", f"{prefix}delete"),
-            "set_role": Command("set_role", self.__setRoleCommand, 
-            "Sets role that is able to manage bot settings. If no role was set, everbody will be able to change bot settings!", f"{prefix}set_role <@role>"),
-            "set_ip": Command("set_ip", self.__setIpCommand, 
-            "Sets minecraft server ip. Bot will request player data from there", f"{prefix}set_ip <minecraft server ip>"),
-            "cfg": Command("cfg", self.__cfgCommand, 
-            "Shows current bot's settings", f"{prefix}cfg"),
-            "help": Command("help", self.__helpCommand, 
-            "Shows help message", f"{prefix}help"),
+            "start": Command("start", self.__startCommand, f"{prefix}start"),
+            "create": Command("create", self.__createCommand, f"{prefix}create"),
+            "delete": Command("delete", self.__deleteCommand, f"{prefix}delete"),
+            "set_role": Command("set_role", self.__setRoleCommand, f"{prefix}set_role <@role>"),
+            "set_ip": Command("set_ip", self.__setIpCommand, f"{prefix}set_ip <minecraft server ip>"),
+            "cfg": Command("cfg", self.__cfgCommand, f"{prefix}cfg"),
+            "help": Command("help", self.__helpCommand, f"{prefix}help"),
+            "ru": Command("ru", self.__setLangRuCommand, f"{prefix}ru"),
+            "en": Command("en", self.__setLangEnCommand, f"{prefix}en"),
         }
         self.owner_commands: Dict[str, Command] = {
-            "data": Command("data", self.__dataOwnerCommand, 
-            "-", "-"),
-            "stat": Command("stat", self.__statOwnerCommand, 
-            "-", "-"),
+            "data": Command("data", self.__dataOwnerCommand, "-"),
+            "stat": Command("stat", self.__statOwnerCommand, "-"),
         }
         Logger.printLog("App inited")
 
@@ -63,23 +57,23 @@ class OnlineApp():
             return
 
         if command in self.commands and type(message.channel) == TextChannel:
+            guild_data = FileManager.getGuildData(message.guild.id)
             if self.__isPermitted(message):
-                guild_data = FileManager.getGuildData(message.guild)
                 await self.commands[command].handler(message, guild_data)
             else:
-                await MessageSender.sendNotPermitted(message.channel)
+                await MessageSender.sendNotPermitted(message.channel, guild_data["lang"])
         elif command in self.owner_commands:
             await self.owner_commands[command].handler(message)
 
     def __isPermitted(self, message: Message) -> bool:
-        mgr_role_id = FileManager.getRole(message.guild)
+        mgr_role_id = FileManager.getRole(message.guild.id)
         mgr_role: Role = message.guild.get_role(mgr_role_id)
         if not mgr_role:
             return True
         return mgr_role in message.author.roles
 
     async def onReactionAdd(self, payload) -> None:
-        guild_data = FileManager.getGuildDataById(payload.guild_id)
+        guild_data = FileManager.getGuildData(payload.guild_id)
         # ignoring reactions from not set up guilds or dms
         if not guild_data:
             return
@@ -94,7 +88,7 @@ class OnlineApp():
                 Logger.printLog(f'Cant get message from reaction!!! Message id: {guild_data["message"]} | Guild id: {guild.id} name: {guild.name} | channel id: {channel.id}', True)
                 return
             api_result = ApiManager.getOnlineList(guild_data["server_ip"], guild_data["port"])
-            await MessageSender.editOnlineMsg(online_msg, api_result, api_result != False)
+            await MessageSender.editOnlineMsg(online_msg, api_result, guild_data["lang"], api_result != False)
             await online_msg.remove_reaction(refresh_emoji, payload.member)
             # recording statistics and logs
             StatFileManager.incCallStat(payload.guild_id)
@@ -114,80 +108,109 @@ class OnlineApp():
             
     async def __startCommand(self, message: Message, guild_data):
         if not guild_data:
-            FileManager.createNewGuild(message.guild)
-            await MessageSender.sendGuildInited(message.channel)
+            FileManager.createNewGuild(message.guild.id)
+            await MessageSender.sendGuildInited(message.channel, DEFAULT_LANG)
             Logger.printLog(f"{message.guild.name} joined! Id: {message.guild.id}")
         else:
-            await MessageSender.sendGuildAlreadyInited(message.channel)
+            await MessageSender.sendGuildAlreadyInited(message.channel, guild_data["lang"])
 
     @needs_guild_file
     async def __createCommand(self, message: Message, guild_data):
         if guild_data["server_ip"] == "":
-            await MessageSender.sendNotSetUp(message.channel)
+            await MessageSender.sendNotSetUp(message.channel, guild_data["lang"])
             return
         api_result = ApiManager.getOnlineList(guild_data["server_ip"], guild_data["port"])
         if api_result == False:
-            await MessageSender.sendCantConnect(message.channel)
+            await MessageSender.sendCantConnect(message.channel, guild_data["lang"])
         else:
-            online_msg: Message = await MessageSender.sendOnlineMsg(message.channel, api_result)
+            online_msg: Message = await MessageSender.sendOnlineMsg(message.channel, api_result, guild_data["lang"])
             await online_msg.add_reaction(refresh_emoji)
-            FileManager.setMessage(message.guild, online_msg)
-            FileManager.setChannel(message.guild, message.channel)
+            FileManager.setMessage(message.guild.id, online_msg)
+            FileManager.setChannel(message.guild.id, message.channel)
 
     @needs_guild_file
     async def __deleteCommand(self, message: Message, guild_data):
         if guild_data["message"] == -1:
-            await MessageSender.sendMessageMissing(message.channel)
+            await MessageSender.sendMessageMissing(message.channel, guild_data["lang"])
             return
         await message.guild.fetch_channels()
-        channel: TextChannel = message.guild.get_channel(guild_data["channel"])
-        if not channel:
-            await MessageSender.sendMessageMissing(message.channel)
+        try:
+            channel: TextChannel = message.guild.get_channel(guild_data["channel"])
+        except DiscordException:
+            await MessageSender.sendMessageMissing(message.channel, guild_data["lang"])
             return
-        online_msg: Message = await channel.fetch_message(guild_data["message"])
+        if not channel:
+            await MessageSender.sendMessageMissing(message.channel, guild_data["lang"])
+            return
+        try:
+            online_msg: Message = await channel.fetch_message(guild_data["message"])
+        except DiscordException:
+            await MessageSender.sendMessageMissing(message.channel, guild_data["lang"])
+            return
         if not online_msg:
-            await MessageSender.sendMessageMissing(message.channel)
+            await MessageSender.sendMessageMissing(message.channel, guild_data["lang"])
             return
         await online_msg.delete()
-        FileManager.resetChannel(message.guild)
-        FileManager.resetMessage(message.guild)
-        await MessageSender.sendMessageDeleted(message.channel)
+        FileManager.resetChannel(message.guild.id)
+        FileManager.resetMessage(message.guild.id)
+        await MessageSender.sendMessageDeleted(message.channel, guild_data["lang"])
 
     @needs_guild_file
     async def __setRoleCommand(self, message: Message, guild_data):
         raw_role_id = self.__retrieveArgFromMessageStr(message.content)
         if len(raw_role_id) == 0:
-            MessageSender.sendInvalidSyntax(message.channel, "Role argument is missing")
+            await MessageSender.sendInvalidSyntax(message.channel, "role_arg_missing", guild_data["lang"])
             return
-        role_id: int = int(''.join([i for i in raw_role_id[0] if i.isdigit()]))
+        try:
+            role_id: int = int(''.join([i for i in raw_role_id[0] if i.isdigit()]))
+        except ValueError:
+            await MessageSender.sendInvalidSyntax(message.channel, "invalid_role", guild_data["lang"])
+            return
         role: Role = message.guild.get_role(role_id)
         if role:
-            FileManager.setRole(message.guild, role)
-            await MessageSender.sendParameterSet(message.channel, "Manager role", role.mention)
+            FileManager.setRole(message.guild.id, role)
+            await MessageSender.sendParameterSet(message.channel, "manager_role", role.mention, guild_data["lang"])
         else:
-            MessageSender.sendInvalidSyntax(message.channel, "Invalid role")
+            await MessageSender.sendInvalidSyntax(message.channel, "invalid_role", guild_data["lang"])
 
     @needs_guild_file
     async def __setIpCommand(self, message: Message, guild_data):
         ip_str = self.__retrieveArgFromMessageStr(message.content)
         if len(ip_str) == 0:
-            await MessageSender.sendInvalidSyntax(message.channel, "Ip argument is missing")
+            await MessageSender.sendInvalidSyntax(message.channel, "ip_arg_missing", guild_data["lang"])
             return
-        FileManager.setServerIp(message.guild, ip_str[0])
-        await MessageSender.sendParameterSet(message.channel, "Ip", ip_str[0])
+        FileManager.setServerIp(message.guild.id, ip_str[0])
+        await MessageSender.sendParameterSet(message.channel, "ip", ip_str[0], guild_data["lang"])
 
     @needs_guild_file
     async def __cfgCommand(self, message: Message, guild_data):
-        await MessageSender.sendCfg(message.channel, guild_data)
+        await MessageSender.sendCfg(message.channel, guild_data, guild_data["lang"])
 
     async def __helpCommand(self, message: Message, guild_data):
+        if not guild_data:
+            lang = DEFAULT_LANG
+        else:
+            lang = guild_data["lang"]
         await MessageSender.sendEmbed(
             message.channel,
             [[f"**`{cmd.syntax}`**" for _, cmd in self.commands.items()] + 
-            ["**Get the plugin:**", "**Have a question? Found bug? Contact us here!**"],
-            [f"*{cmd.description}*" for _, cmd in self.commands.items()] + 
-            ["https://www.curseforge.com/minecraft/bukkit-plugins/onlinemc", "https://discord.gg/Y7cnUV58Rn"]],
+            help_links[lang],
+            [f"*{command_descriptions[cmd.command][lang]}*" for _, cmd in self.commands.items()] + 
+            ["https://www.curseforge.com/minecraft/bukkit-plugins/onlinemc", "https://discord.gg/Y7cnUV58Rn"]], 
+            lang
         )
+
+    @needs_guild_file
+    async def __setLangRuCommand(self, message: Message, guild_data):
+        FileManager.setLangRu(message.guild.id)
+        guild_data = FileManager.getGuildData(message.guild.id)
+        await MessageSender.sendLangSwitched(message.channel, guild_data["lang"])
+
+    @needs_guild_file
+    async def __setLangEnCommand(self, message: Message, guild_data):
+        FileManager.setLangEn(message.guild.id)
+        guild_data = FileManager.getGuildData(message.guild.id)
+        await MessageSender.sendLangSwitched(message.channel, guild_data["lang"])
     
     @owner_command
     async def __dataOwnerCommand(self, message: Message):
@@ -204,7 +227,7 @@ class OnlineApp():
             except Forbidden:
                 guild_names.append(f"Name: *`Guild is forbidden`* Id: `{id_}`")
 
-            guilds_data.append(f"```{dumps(FileManager.getGuildDataById(id_), indent=4)}```")
+            guilds_data.append(f"```{dumps(FileManager.getGuildData(id_), indent=4)}```")
 
         await MessageSender.sendEmbed(
             message.channel,
