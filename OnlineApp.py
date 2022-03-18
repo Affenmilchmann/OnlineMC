@@ -57,6 +57,7 @@ class OnlineApp():
             return
 
         if command in self.commands and type(message.channel) == TextChannel:
+            Logger.writeApiLog(f"Guild {message.guild}({message.guild.id}) called '{message.content}'")
             guild_data = FileManager.getGuildData(message.guild.id)
             if self.__isPermitted(message):
                 await self.commands[command].handler(message, guild_data)
