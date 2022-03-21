@@ -10,7 +10,7 @@ from discord.errors import Forbidden, DiscordException
 
 from Logger import Logger
 from MessageSender import MessageSender
-from cfg import DEFAULT_LANG, prefix, refresh_emoji, owner_id
+from cfg import DEFAULT_LANG, prefix, refresh_emoji, owner_id, invite_link
 from messages_cfg import help_links, command_descriptions
 from Command import Command
 from FileManager import FileManager, StatFileManager
@@ -197,7 +197,7 @@ class OnlineApp():
             [[f"**`{cmd.syntax}`**" for _, cmd in self.commands.items()] + 
             help_links[lang],
             [f"*{command_descriptions[cmd.command][lang]}*" for _, cmd in self.commands.items()] + 
-            ["https://www.curseforge.com/minecraft/bukkit-plugins/onlinemc", "https://discord.gg/Y7cnUV58Rn"]], 
+            ["https://www.curseforge.com/minecraft/bukkit-plugins/onlinemc", invite_link]], 
             lang
         )
 

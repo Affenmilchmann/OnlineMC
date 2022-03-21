@@ -1,4 +1,4 @@
-from cfg import prefix, DEFAULT_PORT
+from cfg import prefix, DEFAULT_PORT, invite_link
 
 footer_text = {
     "en": f"OnlineMC | Found bug? Have a question? Use {prefix}help to see support server link",
@@ -129,11 +129,15 @@ info_msgs = {
             "en": f"Make sure you have\n \
                     - Installed OnlineMC plugin (Link can be found in `{prefix}help`)\n \
                     - Server IP is correct. Without port (without ':' and digits after) (Ссылка в `{prefix}help`)\n \
-                    - Port {DEFAULT_PORT} opened on your server",
+                    - Port {DEFAULT_PORT} opened on your server\n \
+                    \n\
+                    If help needed, feel free to contact us here {invite_link}",
             "ru": f"Убедитесь, что\n \
                     - Плагин OnlineMC установлен на сервере (Ссылка в `{prefix}help`)\n \
                     - Айпи сервера указан корректно. Без порта, то есть без двоеточия и цифр после него\n \
-                    - Порт {DEFAULT_PORT} открыт в настройках вашего сервера (уточните у хостинга, как это сделать, если не понимаете, о чём речь)"
+                    - Порт {DEFAULT_PORT} открыт в настройках вашего сервера (уточните у хостинга, как это сделать, если не понимаете, о чём речь)\n \
+                    \n\
+                    Не стесняйтесь обращаться за помощью! Сервер поддержки - {invite_link}"
         }
     },
     "invalid_syntax": {

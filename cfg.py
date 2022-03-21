@@ -37,3 +37,4 @@ LANGS = {
 DEFAULT_LANG = "en"
 
 owner_id = 360440725923430440
+invite_link = "https://discord.gg/Y7cnUV58Rn"
