@@ -128,9 +128,11 @@ info_msgs = {
         "value": {
             "en": f"Make sure you have\n \
                     - Installed OnlineMC plugin (Link can be found in `{prefix}help`)\n \
+                    - Server IP is correct. Without port (without ':' and digits after) (Ссылка в `{prefix}help`)\n \
                     - Port {DEFAULT_PORT} opened on your server",
-            "ru": f"Убедитесь, что вы\n \
-                    - Установили плагин OnlineMC (Ссылка в `{prefix}help`)\n \
+            "ru": f"Убедитесь, что\n \
+                    - Плагин OnlineMC установлен на сервере (Ссылка в `{prefix}help`)\n \
+                    - Айпи сервера указан корректно. Без порта, то есть без двоеточия и цифр после него\n \
                     - Порт {DEFAULT_PORT} открыт в настройках вашего сервера"
         }
     },
