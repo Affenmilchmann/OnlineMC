@@ -2,13 +2,13 @@ from requests import get, Response, RequestException
 from json import loads
 
 from Logger import Logger
-from cfg import API_PATH
+from cfg import API_PATH, TIMEOUT
 
 class ApiManager():
     @classmethod
     def __sendRequest(cls, addr: str):
         try:
-            resp = get(url=addr, timeout=10)
+            resp = get(url=addr, timeout=TIMEOUT)
         except RequestException as e:
             Logger.writeApiFatalLog(f"{e}")
             return False

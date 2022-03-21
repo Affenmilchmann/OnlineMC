@@ -26,6 +26,8 @@ if not ospath.exists(WEEK_NUMBER_FILE):
 prefix = "mcon!"
 refresh_emoji = "🔄"
 default_embeds_colour = Colour.green()
+
+TIMEOUT = 5 #seconds
 API_PATH = "/mconline/"
 DEFAULT_PORT = "11235"
 LANGS = {
