@@ -219,6 +219,7 @@ class OnlineApp():
         guilds_data: List = []
         guild_names: List[str] = []
         for id_ in guild_ids:
+            guilds_data.append(f"```{dumps(FileManager.getGuildData(id_), indent=4)}```")
             try:
                 guild: Guild = await self.client.fetch_guild(guild_id=id_)
                 if not guild:
@@ -227,8 +228,8 @@ class OnlineApp():
                     guild_names.append(f"Name: `{guild.name}` Id: `{id_}`")
             except Forbidden:
                 guild_names.append(f"Name: *`Guild is forbidden`* Id: `{id_}`")
-
-            guilds_data.append(f"```{dumps(FileManager.getGuildData(id_), indent=4)}```")
+                FileManager.rmFile(id_)
+                StatFileManager.rmFile(id_)
 
         await MessageSender.sendEmbed(
             message.channel,
@@ -242,6 +243,7 @@ class OnlineApp():
         guilds_data: List = []
         guild_names: List[str] = []
         for id_ in guild_ids:
+            guilds_data.append(f"```{dumps(StatFileManager.getStats(id_), indent=4)}```")
             try:
                 guild: Guild = await self.client.fetch_guild(guild_id=id_)
                 if not guild:
@@ -252,8 +254,6 @@ class OnlineApp():
                 guild_names.append(f"Name: *`Guild is forbidden`* Id: `{id_}`")
                 FileManager.rmFile(id_)
                 StatFileManager.rmFile(id_)
-
-            guilds_data.append(f"```{dumps(StatFileManager.getStats(id_), indent=4)}```")
 
         await MessageSender.sendEmbed(
             message.channel,

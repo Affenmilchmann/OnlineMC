@@ -23,7 +23,7 @@ if not ospath.exists(WEEK_NUMBER_FILE):
         dump(0, f)
         Logger.printLog(f"{WEEK_NUMBER_FILE} was missiog so it was created")
 
-prefix = "mcon!"
+prefix = "test!"
 refresh_emoji = "🔄"
 default_embeds_colour = Colour.green()
 
