@@ -250,6 +250,8 @@ class OnlineApp():
                     guild_names.append(f"Name: `{guild.name}` Id: `{id_}`")
             except Forbidden:
                 guild_names.append(f"Name: *`Guild is forbidden`* Id: `{id_}`")
+                FileManager.rmFile(id_)
+                StatFileManager.rmFile(id_)
 
             guilds_data.append(f"```{dumps(StatFileManager.getStats(id_), indent=4)}```")
 
