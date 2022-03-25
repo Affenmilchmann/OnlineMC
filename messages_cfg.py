@@ -128,13 +128,13 @@ info_msgs = {
         "value": {
             "en": f"Make sure you have\n \
                     - Installed OnlineMC plugin (Link can be found in `{prefix}help`)\n \
-                    - Server IP is correct. Without port (without ':' and digits after) (Ссылка в `{prefix}help`)\n \
+                    - Server IP is correct\n \
                     - Port {DEFAULT_PORT} opened on your server\n \
                     \n\
                     **If you did all steps but still se this message, contact us here:** {invite_link}",
             "ru": f"Убедитесь, что\n \
                     - Плагин OnlineMC установлен на сервере (Ссылка в `{prefix}help`)\n \
-                    - Айпи сервера указан корректно. Без порта, то есть без двоеточия и цифр после него\n \
+                    - Айпи сервера указан корректно\n \
                     - Порт {DEFAULT_PORT} открыт в настройках вашего сервера (уточните у хостинга, как это сделать, если не понимаете, о чём речь)\n \
                     \n\
                     **Если все вышеперечисленные шаги выполнены, но вы видите это сообщение, обращайтесь сюда:** {invite_link}"
@@ -152,6 +152,10 @@ info_msgs = {
         "role_arg_missing": {
             "en": "`Role` argument is missing",
             "ru": "Отсутствует аргумент `роль`"
+        },
+        "ip_with_port": {
+            "en": "Provide us your server's ip without port, please. (Without ':' and digits after it)",
+            "ru": "Предоставьте, пожалуйста, айпи вашего сервера без порта. (Без ':' и цифр после)"
         },
         "invalid_role": {
             "en": "Invalid role",
