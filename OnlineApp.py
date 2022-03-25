@@ -180,7 +180,7 @@ class OnlineApp():
         if len(ip_str) == 0:
             await MessageSender.sendInvalidSyntax(message.channel, "ip_arg_missing", guild_data["lang"])
             return
-        if ":" in ip_str:
+        if ":" in ip_str[0]:
             await MessageSender.sendInvalidSyntax(message.channel, "ip_with_port", guild_data["lang"])
             return
         FileManager.setServerIp(message.guild.id, ip_str[0])

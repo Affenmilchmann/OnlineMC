@@ -154,8 +154,10 @@ info_msgs = {
             "ru": "Отсутствует аргумент `роль`"
         },
         "ip_with_port": {
-            "en": "Provide us your server's ip without port, please. (Without ':' and digits after it)",
-            "ru": "Предоставьте, пожалуйста, айпи вашего сервера без порта. (Без ':' и цифр после)"
+            "en": "Provide us your server's ip without port, please. (Without ':' and digits after it) \n \
+                    If your input was *0.0.0.0:0000* for example, then you should replace it with *0.0.0.0*",
+            "ru": "Предоставьте, пожалуйста, айпи вашего сервера без порта. (Без ':' и цифр после) \n \
+                    Если вы ввели, для примера, *0.0.0.0:0000*, тогда замените это на *0.0.0.0*"
         },
         "invalid_role": {
             "en": "Invalid role",
