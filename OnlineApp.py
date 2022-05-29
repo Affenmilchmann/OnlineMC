@@ -221,8 +221,13 @@ class OnlineApp():
         guild_ids = FileManager.getGuildsIds()
         guilds_data: List = []
         guild_names: List[str] = []
+        empty_guilds = 0
         for id_ in guild_ids:
-            guilds_data.append(f"```{dumps(FileManager.getGuildData(id_), indent=4)}```")
+            data = FileManager.getGuildData(id_)
+            if data["total_calls"] == 0:
+                empty_guilds += 1
+                continue
+            guilds_data.append(f"```{dumps(data, indent=4)}```")
             try:
                 guild: Guild = await self.client.fetch_guild(guild_id=id_)
                 if not guild:
@@ -236,7 +241,7 @@ class OnlineApp():
 
         await MessageSender.sendEmbed(
             message.channel,
-            [guild_names, guilds_data],
+            [guild_names + ["Amount of servers with zero activity ever:"], guilds_data + [empty_guilds]],
             guild_footer=False
         )
 
@@ -245,8 +250,13 @@ class OnlineApp():
         guild_ids = StatFileManager.getGuildsIds()
         guilds_data: List = []
         guild_names: List[str] = []
+        empty_guilds = 0
         for id_ in guild_ids:
-            guilds_data.append(f"```{dumps(StatFileManager.getStats(id_), indent=4)}```")
+            data = StatFileManager.getStats(id_)
+            if data["total_calls"] == 0:
+                empty_guilds += 1
+                continue
+            guilds_data.append(f"```{dumps(data, indent=4)}```")
             try:
                 guild: Guild = await self.client.fetch_guild(guild_id=id_)
                 if not guild:
@@ -260,6 +270,6 @@ class OnlineApp():
 
         await MessageSender.sendEmbed(
             message.channel,
-            [guild_names, guilds_data],
+            [guild_names + ["Amount of servers with zero activity ever:"], guilds_data + [empty_guilds]],
             guild_footer=False
         )
