@@ -221,11 +221,11 @@ class OnlineApp():
         guild_ids = FileManager.getGuildsIds()
         guilds_data: List = []
         guild_names: List[str] = []
-        empty_guilds = 0
+        idle_guilds = 0
         for id_ in guild_ids:
             data = FileManager.getGuildData(id_)
-            if data["total_calls"] == 0:
-                empty_guilds += 1
+            if data["message"] == -1:
+                idle_guilds += 1
                 continue
             guilds_data.append(f"```{dumps(data, indent=4)}```")
             try:
@@ -241,7 +241,7 @@ class OnlineApp():
 
         await MessageSender.sendEmbed(
             message.channel,
-            [guild_names + ["Amount of servers with zero activity ever:"], guilds_data + [empty_guilds]],
+            [guild_names + ["Amount of servers that have never succeeded to call /create:"], guilds_data + [idle_guilds]],
             guild_footer=False
         )
 
