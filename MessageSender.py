@@ -74,7 +74,7 @@ class MessageSender():
     async def sendOnlineMsg(cls, channel: TextChannel, player_list: List[str], lang: str, connection=True):
         return await cls.sendEmbed(
             channel, 
-            [[online_list_msg["online_players"][lang]],
+            [[online_list_msg["online_players"][lang].format(len(player_list))],
             [cls.__formPlayerListStr(player_list, lang, connection)]],
             lang
         )

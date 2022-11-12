@@ -1,4 +1,5 @@
-from discord import Client
+from random import choice
+from discord import Client, Game, Activity, ActivityType, Intents
 
 from OnlineApp import OnlineApp
 from aftoken import af_token
@@ -22,7 +23,9 @@ class AfClient(Client):
             self.initApp()
         await self.app.onReactionAdd(payload)
 
-client = AfClient()
+afIntents = Intents().default()
+afIntents.messages = True
+client = AfClient(activity=Game(name="with a grass block"), intents=afIntents)
 
 try:
     client.run(af_token)
