@@ -29,8 +29,8 @@ online_list_msg = {
         "ru": "*Обновлено: {}*"
     },
     "online_players": {
-        "en": "**Online players:**",
-        "ru": "**Игроки онлайн:**"
+        "en": "**Online players: {count}**",
+        "ru": "**Игроки онлайн: {count}**"
     },
 }
 

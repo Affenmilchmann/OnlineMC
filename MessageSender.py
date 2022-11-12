@@ -86,7 +86,10 @@ class MessageSender():
             return
         embed_: Embed = message.embeds[0]
         embed_.clear_fields()
-        embed_.add_field(name=online_list_msg["online_players"][lang], value=cls.__formPlayerListStr(player_list, lang, connection))
+        embed_.add_field(
+                name=online_list_msg["online_players"][lang].format(count=len(player_list)), 
+                value=cls.__formPlayerListStr(player_list, lang, connection)
+            )
         await message.edit(embed=embed_)
 
     @classmethod
