@@ -23,8 +23,8 @@ class AfClient(Client):
             self.initApp()
         await self.app.onReactionAdd(payload)
 
-afIntents = Intents().default()
-afIntents.messages = True
+afIntents = Intents.default()
+afIntents.message_content = True
 client = AfClient(activity=Game(name="with a grass block"), intents=afIntents)
 
 try:
