@@ -229,7 +229,7 @@ class OnlineApp():
                 continue
             guilds_data.append(f"```{dumps(data, indent=4)}```")
             try:
-                guild: Guild = await self.client.fetch_guild(guild_id=id_)
+                guild: Guild = await self.client.fetch_guild(id_)
                 if not guild:
                     guild_names.append(f"Name: *`Cant fetch guild`* Id: `{id_}`")
                 else:
@@ -258,7 +258,7 @@ class OnlineApp():
                 continue
             guilds_data.append(f"```{dumps(data, indent=4)}```")
             try:
-                guild: Guild = await self.client.fetch_guild(guild_id=id_)
+                guild: Guild = await self.client.fetch_guild(id_)
                 if not guild:
                     guild_names.append(f"Name: *`Cant fetch guild`* Id: `{id_}`")
                 else:
