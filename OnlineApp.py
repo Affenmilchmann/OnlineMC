@@ -6,7 +6,7 @@ from discord.message import Message
 from discord.guild import Guild, Member
 from discord.role import Role
 from discord.channel import TextChannel
-from discord.errors import Forbidden, DiscordException
+from discord.errors import Forbidden, DiscordException, NotFound
 
 from Logger import Logger
 from MessageSender import MessageSender
@@ -238,6 +238,10 @@ class OnlineApp():
                 guild_names.append(f"Name: *`Guild is forbidden`* Id: `{id_}`")
                 FileManager.rmFile(id_)
                 StatFileManager.rmFile(id_)
+            except NotFound:
+                guild_names.append(f"Name: *`Guild is not found`* Id: `{id_}`")
+                FileManager.rmFile(id_)
+                StatFileManager.rmFile(id_)
 
         await MessageSender.sendEmbed(
             message.channel,
@@ -265,6 +269,10 @@ class OnlineApp():
                     guild_names.append(f"Name: `{guild.name}` Id: `{id_}`")
             except Forbidden:
                 guild_names.append(f"Name: *`Guild is forbidden`* Id: `{id_}`")
+                FileManager.rmFile(id_)
+                StatFileManager.rmFile(id_)
+            except NotFound:
+                guild_names.append(f"Name: *`Guild is not found`* Id: `{id_}`")
                 FileManager.rmFile(id_)
                 StatFileManager.rmFile(id_)
 
