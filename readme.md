@@ -9,7 +9,8 @@ It requires [server side plugin](https://legacy.curseforge.com/minecraft/bukkit-
 2. Write in `aftoken.py` replacing `<bot_token>` with your bot's token.
 
     ```af_token = "<bot_token>"```
-3. Run `main.py`
+3. Enable "message content intent" in your bot developer portal.
+4. Run `main.py`
 
 ### Example
 
