@@ -5,11 +5,11 @@ It requires [server side plugin](https://legacy.curseforge.com/minecraft/bukkit-
 
 ## Quick start
 
-1. create `aftoken.py` file
-2. write replacing `<bot_token>` with your bot's token.
+1. Create `aftoken.py` file
+2. Write in `aftoken.py` replacing `<bot_token>` with your bot's token.
 
     ```af_token = "<bot_token>"```
-3. run `main.py`
+3. Run `main.py`
 
 ### Example
 
